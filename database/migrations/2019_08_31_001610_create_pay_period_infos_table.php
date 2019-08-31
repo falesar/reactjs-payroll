@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateUsersTable extends Migration
+class CreatePayPeriodInfosTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,11 @@ class CreateUsersTable extends Migration
      */
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('pay_period_infos', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer("employee_id")->default(0);
-            $table->string('email')->unique();
-            $table->longText('password');
-            $table->rememberToken();
+            $table->integer("employee_id");
+            $table->float("days_present");
+            $table->float("mins_late");
             $table->timestamps();
         });
     }
@@ -30,6 +29,6 @@ class CreateUsersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('pay_period_infos');
     }
 }
