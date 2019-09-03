@@ -18,6 +18,45 @@ class PayPeriodInfoController extends Controller
     }
 
     /**
+     * Get Employee Log.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function getEmployeeLog (Request $request)
+    {
+        // TODO: TEST!!
+        $input = $request->all();
+        $employee_log = PayPeriodInfo::where('employee_id', $input['id'])->first();
+
+        return response($employee_log, 200);
+    }
+
+    /**
+     * Create / Update Employee Log.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function fileEmployeeLog (Request $request)
+    {
+        // TODO: TEST!!
+        $input = $request->all();
+
+        $employee_log = PayPeriodInfo::where('employee_id', $input['id'])->first();
+
+        if ($employee) {
+            $employee_log->days_present = $input['days_present'];
+            $employee_log->mins_late = $input['mins_late'];
+        } else {
+            $employee_log = new PayPeriodInfo();
+            $employee_log->employee_id = $input['id'];
+            $employee_log->days_present = $input['days_present'];
+            $employee_log->mins_late = $input['mins_late'];
+        }
+        $employee_log->save();
+        return response($employee, 200);
+    }
+
+    /**
      * Show the form for creating a new resource.
      *
      * @return \Illuminate\Http\Response
