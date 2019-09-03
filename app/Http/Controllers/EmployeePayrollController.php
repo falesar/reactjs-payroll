@@ -6,6 +6,7 @@ use App\EmployeePayroll;
 use App\EmployeeInfo;
 use App\PayPeriodInfo;
 use Illuminate\Http\Request;
+use PDF;
 
 class EmployeePayrollController extends Controller
 {
@@ -19,6 +20,15 @@ class EmployeePayrollController extends Controller
         //
     }
 
+    public function getEmployeePayslip (Request $request)
+    {
+        $input = $request->all();
+        $employee_payroll = EmployeePayroll::where('employee_id', $input['id'])->first();
+        $decrypted_details = decrypt($employee_payroll->payroll_details);
+        $decoded_details = json_decode($decrypted_details, true);
+        return response($decoded_details, 200);
+    }
+
     public function generatePayroll (Request $request) 
     {
         $employees = EmployeeInfo::orderBy('id', 'asc')->get();
@@ -28,19 +38,19 @@ class EmployeePayrollController extends Controller
             $employee_log = PayPeriodInfo::where('employee_id', $employee->id)->first();
             $decrypted_info = decrypt($employee->employee_info);
             $decoded_info = json_decode($decrypted_info);
-            $basic_pay = $decoded_info['monthly_pay'] / 2;
+            $basic_pay = $decoded_info->monthly_pay / 2;
 
-            $payroll_details['salary'] = $decoded_info['monthly_pay'];
+            $payroll_details['salary'] = $decoded_info->monthly_pay;
             $payroll_details['basic_pay'] = $basic_pay;
             $payroll_details['tardiness'] = $this->getLatesDeduction($employee_log->mins_late, $basic_pay);
             $payroll_details['absences'] = $this->getAbsencesDeduction($employee_log->days_present, $basic_pay);
             $payroll_details['gross_pay'] = $this->getGrossPay($basic_pay, $payroll_details['tardiness'], $payroll_details['absences']); // After Deductions Pay TODO
-            $payroll_details['sss'] = $this->getSSSContribution($decoded_info['monthly_pay']);  // SSS
-            $payroll_details['philhealth'] = $this->getPhilHealthContribution($decoded_info['monthly_pay']); // PhilHealth
-            $payroll_details['pagibig'] = $this->getPagibigContribution($decoded_info['monthly_pay']); // PagIbig
-            $payroll_details['tax'] = $this->getTax(); // Tax TODO
-            $payroll_details['total_deduction'] = $this->getTotalDeductions(); // Total deductions TODO
-            $payroll_details['net'] = $this->getTotalNet(); // Net after deductions TODO
+            $payroll_details['sss'] = $this->getSSSContribution($decoded_info->monthly_pay);  // SSS
+            $payroll_details['philhealth'] = $this->getPhilHealthContribution($decoded_info->monthly_pay); // PhilHealth
+            $payroll_details['pagibig'] = $this->getPagibigContribution($decoded_info->monthly_pay); // PagIbig
+            $payroll_details['tax'] = $this->getTax($decoded_info->monthly_pay); // Tax
+            $payroll_details['total_deduction'] = $payroll_details['sss'] + $payroll_details['philhealth'] + $payroll_details['pagibig'] + $payroll_details['tax']; // Total deductions
+            $payroll_details['net'] = $payroll_details['gross_pay'] - $payroll_details['total_deduction']; // Net after deductions
 
             $encoded_details = json_encode($payroll_details);
             $payroll_encrypt = encrypt($encoded_details);
@@ -56,6 +66,8 @@ class EmployeePayrollController extends Controller
 
             $employee_payroll->save();
         }
+
+        return "Payroll Generated!";
     }
 
     /**
@@ -160,6 +172,47 @@ class EmployeePayrollController extends Controller
 
         return $contribution;
     }
+
+    /**
+     * Get Tax
+     *
+     * @return $contribution
+     */
+    private function getTax ($monthly_pay)
+    {
+        $tax = 0;
+        $yearly_salary = $monthly_pay * 12;
+
+        // If Yearly Salary is 250,000 or below, then the employee tax exempted.
+        if ($yearly_salary <= 250000) {
+            $tax = 0;
+        } elseif ($yearly_salary > 250000 && $yearly_salary <= 400000) {
+            $excess = $yearly_salary - 250000; // Get the excess, then get the 20% of it.
+            $tax = ($excess * 0.20) / 24; // Divide to 24 since the payroll period is twice every month(12)
+        } elseif ($yearly_salary > 400000 && $yearly_salary <= 800000) {
+            $excess = $yearly_salary - 400000;
+            $percentage = ($excess * 0.25) + 30000; // Get the excess, then get the 25% of it.
+            $tax = $percentage / 24; // Divide to 24 since the payroll period is twice every month(12)
+        } elseif ($yearly_salary > 800000 && $yearly_salary <= 2000000) {
+            $excess = $yearly_salary - 800000;
+            $percentage = ($excess * 0.30) + 130000; // Get the excess, then get the 30% of it.
+            $tax = $percentage / 24; // Divide to 24 since the payroll period is twice every month(12)
+        }
+
+        return $tax;
+    }
+
+    public function exportEmployeePayslip(Request $request)
+    {
+        // $input = $request->all();
+        $employee_payroll = EmployeePayroll::where('employee_id', 1)->first();
+        $decrypted_details = decrypt($employee_payroll->payroll_details);
+        $payroll_details = json_decode($decrypted_details, true);
+
+        $pdf = PDF::loadView('payslippdf', compact("payroll_details"));
+        return $pdf->download('payslip.pdf');
+    }
+
 
     /**
      * Show the form for creating a new resource.

@@ -14,8 +14,9 @@ class EmployeeInfoController extends Controller
      */
     public function index()
     {
-        //
+        dd(csrf_token());
     }
+
 
     /**
      * Get Employee Info.
@@ -24,10 +25,8 @@ class EmployeeInfoController extends Controller
      */
     public function getEmployeeInfo (Request $request)
     {
-        // TODO: TEST!!
         $input = $request->all();
         $employee = EmployeeInfo::where('id', $input['id'])->first();
-
         $encoded_info = decrypt($employee->employee_info);
         $employee_info = json_decode($encoded_info);
 
@@ -41,16 +40,14 @@ class EmployeeInfoController extends Controller
      */
     public function fileEmployeeInfo (Request $request)
     {
-        // TODO: TEST!!
         $input = $request->all();
-
         $employee = EmployeeInfo::where('id', $input['id'])->first();
 
         if ($employee) {
             $info = [
                 'firstname' => $input['firstname'],
                 'lastname' => $input['lastname'],
-                'monthly_pay' => $input['monthy_pay'],
+                'monthly_pay' => $input['monthly_pay'],
             ];
 
             $encoded_info = json_encode($info);
@@ -59,7 +56,7 @@ class EmployeeInfoController extends Controller
             $info = [
                 'firstname' => $input['firstname'],
                 'lastname' => $input['lastname'],
-                'monthly_pay' => $input['monthy_pay'],
+                'monthly_pay' => $input['monthly_pay'],
             ];
 
             $encoded_info = json_encode($info);
