@@ -6,6 +6,7 @@ use App\EmployeePayroll;
 use App\EmployeeInfo;
 use App\PayPeriodInfo;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 use PDF;
 
 class EmployeePayrollController extends Controller
@@ -211,6 +212,87 @@ class EmployeePayrollController extends Controller
 
         $pdf = PDF::loadView('payslippdf', compact("payroll_details"));
         return $pdf->download('payslip.pdf');
+    }
+
+    public function exportPayrollExcel (Request $request)
+    {
+        $filename = "Employee Payroll";
+        $headers = [
+            'NAME',
+            'SALARY',
+            'ABSENCES',
+            'TARDINESS',
+            'GROSS PAY',
+            'TAX',
+            'SSS',
+            'PAG-IBIG',
+            'PHILHEALTH',
+            'NET TOTAL'
+        ];
+        $data = $this->employeeDataColumns();
+        $letters = array_combine(range(1, 26), range('A', 'Z'));
+        // dd($data);
+        Excel::store(function ($excel) use ($headers, $data, $letters) {
+            $excel->sheet('Payroll', function ($sheet) use ($headers, $data, $letters) {
+                $rownum = 3;
+                $letter = 0;
+
+                foreach ($headers as $key => $value) {
+                    $letter = 0;
+                    for ($i = 0; $i < count($value); $i++) {
+                        $colname = $letters[$letter] . $rownum;
+                        $sheet->cell($colname, function ($cell) use ($value, $i) {
+                            $cell->setValue($value[$i]);
+                        });
+                        $letter++;
+                    }
+                    $rownum++;
+                }
+
+                foreach ($data as $key => $value) {
+                    $letter = 0;
+                    for ($i = 0; $i < count($value); $i++) {
+                        for ($i = 0; $i < count($value); $i++) {
+                            $colname = $letters[$letter] . $rownum;
+                            $sheet->cell($colname, function ($cell) use ($value, $i) {
+                                $cell->setValue($value[$i]);
+                            });
+                            $letter++;
+                        }
+                        $rownum++;
+                    }
+                }
+            });
+        }, $filename . '.xlsx');
+    }
+
+    private function employeeDataColumns ()
+    {
+        $payroll_details = [];
+        $employees = EmployeePayroll::orderBy('id', 'asc')->get();
+
+        foreach ($employees as $key => $emp) {
+            $emp_info = EmployeeInfo::where('id', $emp->employee_id)->first();
+            $decrpyted_emp_info = json_decode(decrypt($emp_info->employee_info));
+            $name = $decrpyted_emp_info->lastname . ', ' . $decrpyted_emp_info->firstname;
+            $emp_payroll = json_decode(decrypt($emp->payroll_details));
+
+            $payroll_details[] = [
+                'name' => $name,
+                'basic_pay' => $emp_payroll->basic_pay,
+                'absences' => $emp_payroll->absences,
+                'tardiness' => $emp_payroll->tardiness,
+                'gross_pay' => $emp_payroll->gross_pay,
+                'tax' => $emp_payroll->tax,
+                'sss' => $emp_payroll->sss,
+                'pagibig' => $emp_payroll->pagibig,
+                'philhealth' => $emp_payroll->philhealth,
+                'net' => $emp_payroll->net
+            ];
+        }
+
+        return $payroll_details;
+
     }
 
 
