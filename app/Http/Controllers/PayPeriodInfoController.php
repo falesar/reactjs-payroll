@@ -28,7 +28,16 @@ class PayPeriodInfoController extends Controller
         $input = $request->all();
         $employee_log = PayPeriodInfo::where('employee_id', $input['id'])->first();
 
-        return response($employee_log, 200);
+        if (isset($employee_log)) {
+            return response($employee_log, 200);
+        } else {
+            $employee_log = [
+                'days_present' => 0,
+                'employee_id' => $input['id'],
+                'mins_late' => 0
+            ];
+            return response($employee_log, 200);
+        }
     }
 
     /**
@@ -38,12 +47,11 @@ class PayPeriodInfoController extends Controller
      */
     public function fileEmployeeLog (Request $request)
     {
-        // TODO: TEST!!
         $input = $request->all();
 
         $employee_log = PayPeriodInfo::where('employee_id', $input['id'])->first();
 
-        if ($employee) {
+        if (isset($employee_log)) {
             $employee_log->days_present = $input['days_present'];
             $employee_log->mins_late = $input['mins_late'];
         } else {
@@ -53,7 +61,7 @@ class PayPeriodInfoController extends Controller
             $employee_log->mins_late = $input['mins_late'];
         }
         $employee_log->save();
-        return response($employee, 200);
+        return response($employee_log, 200);
     }
 
     /**

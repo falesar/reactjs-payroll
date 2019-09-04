@@ -14,7 +14,31 @@ class EmployeeInfoController extends Controller
      */
     public function index()
     {
-        dd(csrf_token());
+        $employees = EmployeeInfo::orderBy('id', 'asc')->get();
+        $employee_list = [];
+        foreach ($employees as $key => $employee) {
+            $employee_info = json_decode(decrypt($employee->employee_info));
+            $employee_list[] = [
+                'firstname' => $employee_info->firstname,
+                'lastname' => $employee_info->lastname
+            ];
+        }
+        return response($employee_list, 200);
+    }
+
+    public function getEmployeeInfoNoSalary() {
+        $employees = EmployeeInfo::orderBy('id', 'asc')->get();
+        $employee_list = [];
+        foreach ($employees as $key => $employee) {
+            $employee_info = json_decode(decrypt($employee->employee_info));
+            $employee_list[] = [
+                'id' => $employee->id,
+                'firstname' => $employee_info->firstname,
+                'lastname' => $employee_info->lastname
+            ];
+        }
+
+        return response($employee_list, 200);
     }
 
 
@@ -28,7 +52,8 @@ class EmployeeInfoController extends Controller
         $input = $request->all();
         $employee = EmployeeInfo::where('id', $input['id'])->first();
         $encoded_info = decrypt($employee->employee_info);
-        $employee_info = json_decode($encoded_info);
+        $employee_info = json_decode($encoded_info, true);
+        $employee_info['id'] = $employee->id;
 
         return response($employee_info, 200);
     }
@@ -41,9 +66,12 @@ class EmployeeInfoController extends Controller
     public function fileEmployeeInfo (Request $request)
     {
         $input = $request->all();
-        $employee = EmployeeInfo::where('id', $input['id'])->first();
 
-        if ($employee) {
+        if (isset($input['id']))
+            $employee = EmployeeInfo::where('id', $input['id'])->first();
+        
+
+        if (isset($employee)) {
             $info = [
                 'firstname' => $input['firstname'],
                 'lastname' => $input['lastname'],

@@ -12,4 +12,10 @@ require('./bootstrap');
  * or customize the JavaScript scaffolding to fit your unique needs.
  */
 
-require('./components/Example');
+// require('./components/Example');
+// require('./components/Home');
+// require('./components/EmployeeList');
+// require('./components/CreateEmployee');
+// require('./components/UpdateEmployeeInfo');
+// require('./components/EmployeeLog');
+require('./index');
