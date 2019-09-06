@@ -59,16 +59,16 @@ class EmployeePayrollController extends Controller
             $basic_pay = $decoded_info->monthly_pay / 2;
 
             $payroll_details['salary'] = $decoded_info->monthly_pay;
-            $payroll_details['basic_pay'] = number_format(floatval($basic_pay));
-            $payroll_details['tardiness'] = number_format(floatval($this->getLatesDeduction($employee_log->mins_late, $basic_pay)));
-            $payroll_details['absences'] = number_format(floatval($this->getAbsencesDeduction($employee_log->days_present, $basic_pay)));
-            $payroll_details['gross_pay'] = number_format(floatval($this->getGrossPay($basic_pay, $payroll_details['tardiness'], $payroll_details['absences']))); // After Deductions Pay TODO
-            $payroll_details['sss'] = number_format(floatval($this->getSSSContribution($decoded_info->monthly_pay)));  // SSS
-            $payroll_details['philhealth'] = number_format(floatval($this->getPhilHealthContribution($decoded_info->monthly_pay))); // PhilHealth
-            $payroll_details['pagibig'] = number_format(floatval($this->getPagibigContribution($decoded_info->monthly_pay))); // PagIbig
-            $payroll_details['tax'] = number_format(floatval($this->getTax($decoded_info->monthly_pay))); // Tax
-            $payroll_details['total_deduction'] = number_format(floatval($payroll_details['sss'] + $payroll_details['philhealth'] + $payroll_details['pagibig'] + $payroll_details['tax'])); // Total deductions
-            $payroll_details['net'] = number_format(floatval($payroll_details['gross_pay'] - $payroll_details['total_deduction'])); // Net after deductions
+            $payroll_details['basic_pay'] = $basic_pay;
+            $payroll_details['tardiness'] = $this->getLatesDeduction($employee_log->mins_late, $basic_pay);
+            $payroll_details['absences'] = $this->getAbsencesDeduction($employee_log->days_present, $basic_pay);
+            $payroll_details['gross_pay'] = $this->getGrossPay($basic_pay, $payroll_details['tardiness'], $payroll_details['absences']); // After Deductions Pay TODO
+            $payroll_details['sss'] = $this->getSSSContribution($decoded_info->monthly_pay);  // SSS
+            $payroll_details['philhealth'] = $this->getPhilHealthContribution($decoded_info->monthly_pay); // PhilHealth
+            $payroll_details['pagibig'] = $this->getPagibigContribution($decoded_info->monthly_pay); // PagIbig
+            $payroll_details['tax'] = $this->getTax($decoded_info->monthly_pay); // Tax
+            $payroll_details['total_deduction'] = $payroll_details['sss'] + $payroll_details['philhealth'] + $payroll_details['pagibig'] + $payroll_details['tax']; // Total deductions
+            $payroll_details['net'] = $payroll_details['gross_pay'] - $payroll_details['total_deduction']; // Net after deductions
 
             $encoded_details = json_encode($payroll_details);
             $payroll_encrypt = encrypt($encoded_details);

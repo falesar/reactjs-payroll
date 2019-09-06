@@ -28,11 +28,17 @@ export default class CreateEmployee extends Component {
     handleSubmit(event) {
         event.preventDefault();
 
-        axios.post(`file-employee-info`, { 
-            'firstname': this.state.firstname,
-            'lastname': this.state.lastname,
-            'monthly_pay': this.state.monthly_pay 
-        }).then(ressponse => {
+        axios.post(`api/auth/file-employee-info`, {
+                'firstname': this.state.firstname,
+                'lastname': this.state.lastname,
+                'monthly_pay': this.state.monthly_pay
+            },
+            {
+                headers: {
+                    'Authorization': 'Bearer ' + this.props.token
+                }
+            }
+        ).then(ressponse => {
             console.log(ressponse);
             console.log(ressponse.data);
         })

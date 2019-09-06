@@ -2,15 +2,15 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import axios from 'axios';
 
-export default class UpdateEmployee extends Component {
+export default class EmployeeLog extends Component {
 
     constructor () {
         super();
         this.state = {
             employee_list: [],
-            firstname: '',
-            lastname: '',
-            monthly_pay: 0,
+            selected_employee: 0,
+            days_present: 0,
+            mins_late: 0
         }
 
         this.handleChange = this.handleChange.bind(this);
@@ -35,10 +35,19 @@ export default class UpdateEmployee extends Component {
     handleChange(event) {
         event.preventDefault();
         let value = event.target.value
+
+        if(event.target.name == "days_present") {
+            if (event.target.value > 10) {
+                this.setState({
+                    days_present: 10
+                })
+                event.target.value = 10
+            }
+        }
         
         if (event.target.name == "selected_employee") {
             let id = event.target.value
-            axios.post(`api/auth/employee-info`,
+            axios.post(`api/auth/employee-log-info`,
                 { 
                     'id': id
                 },
@@ -50,9 +59,8 @@ export default class UpdateEmployee extends Component {
             ).then(response => {
                 this.setState({
                     selected_employee: id,
-                    firstname: response.data.firstname,
-                    lastname: response.data.lastname,
-                    monthly_pay: response.data.monthly_pay,
+                    days_present: response.data.days_present,
+                    mins_late: response.data.mins_late
                 })
             })
         } else {
@@ -65,10 +73,9 @@ export default class UpdateEmployee extends Component {
     handleSubmit(event) {
         event.preventDefault();
 
-        axios.post(`api/auth/file-employee-info`, { 
-            'firstname': this.state.firstname,
-            'lastname': this.state.lastname,
-            'monthly_pay': this.state.monthly_pay,
+        axios.post(`api/auth/file-log-info`, { 
+            'days_present': this.state.days_present,
+            'mins_late': this.state.mins_late,
             'id': this.state.selected_employee
         },
         {
@@ -102,19 +109,15 @@ export default class UpdateEmployee extends Component {
 
                                 <form onSubmit={this.handleSubmit}>
                                     <div>
-                                        <label>Firstname:</label>
-                                        <input type="text" name="firstname" onChange={this.handleChange} value={this.state.firstname}/>
+                                        <label>Days Present:</label>
+                                        <input type="number" min="0" max="10" name="days_present" onChange={this.handleChange} value={this.state.days_present}/>
                                     </div>
                                     <div>
-                                        <label>Lastname:</label> 
-                                        <input type="text" name="lastname" onChange={this.handleChange} value={this.state.lastname}/>
+                                        <label>Minutes Late:</label> 
+                                        <input type="number" min="0" name="mins_late" onChange={this.handleChange} value={this.state.mins_late}/>
                                     </div>
                                     <div>
-                                        <label>Monthly Pay:</label> 
-                                        <input type="number" name="monthly_pay" onChange={this.handleChange} value={this.state.monthly_pay}/>
-                                    </div>
-                                    <div>
-                                        <button type="submit">Update</button>
+                                        <button type="submit">Update Log</button>
                                     </div>
                                 </form>
                             </div>
@@ -127,6 +130,6 @@ export default class UpdateEmployee extends Component {
     }
 }
 
-if (document.getElementById('update-employee')) {
-    ReactDOM.render(<UpdateEmployee />, document.getElementById('update-employee'));
+if (document.getElementById('employee-log')) {
+    ReactDOM.render(<EmployeeLog />, document.getElementById('employee-log'));
 }
